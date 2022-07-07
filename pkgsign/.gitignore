@@ -1,0 +1,9 @@
+/node_modules/
+/src/**/*.js
+/src/**/*.js.map
+/pkgsign.tgz
+
+yarn-error.log
+
+test/signature-has-packageJson-entry-present/signature.json
+test/signature-packageJson-omits-npm-on-sign/signature.json
