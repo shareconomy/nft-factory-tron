@@ -6,7 +6,7 @@ import "./NFT/interfaces/ITRC721.sol";
 
 contract Trade {
     struct Order {
-        uint256 price;
+        uint256 priceSUN;
         address seller;
         address buyer;
         bool sellerAccepted;
@@ -18,12 +18,12 @@ contract Trade {
     uint256 private constant _NOT_ENTERED = 1;
     uint256 private constant _ENTERED = 2;
 
-    mapping(address => mapping(uint256 => Order)) private NFTOrders;
+    mapping(address => mapping(uint256 => Order)) public NFTOrders;
 
     event OrderAdded(
         address indexed NFTAddress,
         uint256 indexed tokenID,
-        uint256 indexed price,
+        uint256 indexed priceSUN,
         address seller
     );
     event OrderRedeemed(
@@ -40,7 +40,7 @@ contract Trade {
     event DepositReturned(
         address indexed NFTAddress,
         uint256 indexed tokenID,
-        uint256 indexed price,
+        uint256 indexed priceSUN,
         address buyer
     );
     event SellerAccepted(
@@ -73,7 +73,7 @@ contract Trade {
     function addOrder(
         address _NFTAddress,
         uint256 _tokenID,
-        uint256 _price
+        uint256 _priceSUN
     ) external returns (bool isOrderAdded) {
         ITRC721(_NFTAddress).safeTransferFrom(
             msg.sender,
@@ -81,10 +81,10 @@ contract Trade {
             _tokenID
         );
 
-        NFTOrders[_NFTAddress][_tokenID].price = _price;
+        NFTOrders[_NFTAddress][_tokenID].priceSUN = _priceSUN;
         NFTOrders[_NFTAddress][_tokenID].seller = msg.sender;
 
-        emit OrderAdded(_NFTAddress, _tokenID, _price, msg.sender);
+        emit OrderAdded(_NFTAddress, _tokenID, _priceSUN, msg.sender);
 
         return true;
     }
@@ -110,7 +110,7 @@ contract Trade {
         returns (bool success)
     {
         require(
-            msg.value >= NFTOrders[_NFTAddress][_tokenID].price,
+            msg.value >= NFTOrders[_NFTAddress][_tokenID].priceSUN,
             "Insufficient funds to redeem"
         );
         require(
@@ -137,7 +137,7 @@ contract Trade {
         if (isAccepted) {
             order.sellerAccepted = true;
         } else {
-            (bool success, ) = order.buyer.call{value: order.price}("");
+            (bool success, ) = order.buyer.call{value: order.priceSUN}("");
             require(success, "Can not send TRX to buyer");
 
             order.buyer = address(0);
@@ -154,7 +154,7 @@ contract Trade {
         require(order.sellerAccepted, "Seller didnt accept a trade");
         require(order.buyer != address(0), "Noone redeems an order");
 
-        (bool success, ) = order.seller.call{value: order.price}("");
+        (bool success, ) = order.seller.call{value: order.priceSUN}("");
         require(success, "Can not send TRX to seller");
 
         ITRC721(_NFTAddress).transferFrom(address(this), order.buyer, _tokenID);
@@ -174,21 +174,18 @@ contract Trade {
         NFTOrders[_NFTAddress][_tokenID].buyer = address(0);
         NFTOrders[_NFTAddress][_tokenID].sellerAccepted = false;
 
-        (bool success, ) = order.seller.call{value: order.price}("");
+        (bool success, ) = order.seller.call{value: order.priceSUN}("");
         require(success, "Can not send TRX to buyer");
 
-        emit DepositReturned(_NFTAddress, _tokenID, order.price, msg.sender);
+        emit DepositReturned(_NFTAddress, _tokenID, order.priceSUN, msg.sender);
     }
 
-    function getOrderInfo(address _NFTAddress, uint256 _tokenID)
-        public
-        view
-        returns (Order memory order)
-    {
-        require(
-            NFTOrders[_NFTAddress][_tokenID].seller != address(0),
-            "Query for nonexistent order"
-        );
-        return NFTOrders[_NFTAddress][_tokenID];
+    function onTRC721Received(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public pure returns (bytes4) {
+        return this.onTRC721Received.selector;
     }
 }

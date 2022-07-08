@@ -9,6 +9,7 @@ import "./TRC721.sol";
 
 contract NFT is TRC721, AccessControl {
     using Counters for Counters.Counter;
+    using Strings for uint256;
 
     Counters.Counter private totalAmount;
 
@@ -18,15 +19,20 @@ contract NFT is TRC721, AccessControl {
 
     address public owner;
     uint256 private price;
+    string public baseURI;
+
+    mapping(uint256 => string) private _tokenURIs;
 
     constructor(
         string memory name_,
         string memory symbol_,
+        string memory baseURI_,
         address owner_,
         uint256 price_
     ) TRC721(name_, symbol_) {
         owner = owner_;
         price = price_;
+        baseURI = baseURI_;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         grantRole(DEFAULT_ADMIN_ROLE, owner_);
         grantRole(ADMIN_ROLE, owner_);
@@ -48,10 +54,6 @@ contract NFT is TRC721, AccessControl {
         }
     }
 
-    function changePrice(uint256 amount) external onlyRole(ADMIN_ROLE) {
-        price = amount;
-    }
-
     function totalSupply() public view returns (uint256) {
         return totalAmount.current();
     }
@@ -70,8 +72,29 @@ contract NFT is TRC721, AccessControl {
         }
     }
 
+    function tokenURI(uint256 tokenId) public view returns (string memory) {
+        _requireMinted(tokenId);
+
+        return
+            bytes(baseURI).length > 0
+                ? string(abi.encodePacked(baseURI, tokenId.toString()))
+                : "";
+    }
+
+    function changePrice(uint256 _price) external onlyRole(ADMIN_ROLE) {
+        price = _price;
+    }
+
+    function setBaseURI(string memory _baseURI) external onlyRole(ADMIN_ROLE) {
+        baseURI = _baseURI;
+    }
+
     function getPrice() public view returns (uint256) {
         return price;
+    }
+
+    function _requireMinted(uint256 tokenId) internal view {
+        require(_exists(tokenId), "TRC721: invalid token ID");
     }
 
     function supportsInterface(bytes4 interfaceId)

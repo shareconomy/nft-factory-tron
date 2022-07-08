@@ -1,5 +1,6 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { ethers } = require("ethers");
+const { abi, bytecode } = require ("../build/contracts/NFT.json");
 
 describe("NFT contract", function () {
     let NFT;
@@ -11,13 +12,15 @@ describe("NFT contract", function () {
     const symbol = "GNG"
     const price = 10
     const newOwner = "TL1p3gSF331pgWMyX7WWy62D3G69EuUt7r"
+    const baseURI = "https://gateway.pinata.cloud/ipfs/QmcCnCPnptuxd8b7FWvRuqBMXbxuyVKopp4fTSiXdwUXPU/"
 
     beforeEach(async function () {
-        NFT = await ethers.getContractFactory("NFT");
-        [owner, acc1, acc2, acc3, acc4] = await ethers.getSigners();
+        [owner, acc1, acc2, acc3, acc4] = await ethers.Wallet()
+        NFT = await ethers.ContractFactory(abi, bytecode, owner)
         NFTInstace = await NFT.deploy(
             name,
             symbol,
+            baseURI,
             newOwner,
             price
         );
