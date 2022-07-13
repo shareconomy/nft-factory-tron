@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./NFT/NFT.sol";
+import "./NFT.sol";
 
 contract NFTFactory {
     event Deployed(address newNFTaddress);

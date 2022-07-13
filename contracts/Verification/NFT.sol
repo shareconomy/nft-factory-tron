@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "./utils/Strings.sol";
-import "./utils/AccessControl.sol";
-import "./utils/Counters.sol";
+import "./Strings.sol";
+import "./AccessControl.sol";
+import "./Counters.sol";
 import "./TRC721.sol";
 
 contract NFT is TRC721, AccessControl {
@@ -34,11 +34,15 @@ contract NFT is TRC721, AccessControl {
         owner = owner_;
         price = price_;
         baseURI = baseURI_;
-        amount = 0;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         grantRole(DEFAULT_ADMIN_ROLE, owner_);
         grantRole(ADMIN_ROLE, owner_);
         grantRole(MINTER_ROLE, owner_);
+
+        for (uint256 i = 0; i < amount; i++) {
+            _safeMint(owner_, totalAmount.current());
+            totalAmount.increment();
+        }
     }
 
     function _beforeTokenTransfer(
