@@ -169,13 +169,14 @@ contract Trade {
         nonReentrant
     {
         Order storage order = NFTOrders[_NFTAddress][_tokenID];
-        require(msg.sender == order.buyer, "You did not fund it");
-
-        NFTOrders[_NFTAddress][_tokenID].buyer = address(0);
-        NFTOrders[_NFTAddress][_tokenID].sellerAccepted = false;
+        require(msg.sender == order.buyer || msg.sender == order.seller, "Only seller and buyer can decline");
+        require(order.buyer != address(0), "Nothing to decline");
 
         (bool success, ) = order.seller.call{value: order.priceSUN}("");
         require(success, "Can not send TRX to buyer");
+        
+        NFTOrders[_NFTAddress][_tokenID].buyer = address(0);
+        NFTOrders[_NFTAddress][_tokenID].sellerAccepted = false;
 
         emit DepositReturned(_NFTAddress, _tokenID, order.priceSUN, msg.sender);
     }

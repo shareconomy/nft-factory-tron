@@ -18,6 +18,7 @@ contract NFT is TRC721, AccessControl {
     bytes4 private constant _INTERFACE_ID_FEES = 0xb7799584;
 
     address public owner;
+    address public factory;
     uint256 public price;
     string public baseURI;
 
@@ -29,9 +30,10 @@ contract NFT is TRC721, AccessControl {
         string memory baseURI_,
         address owner_,
         uint256 price_,
-        uint256 amount
+        uint256 amount_
     ) TRC721(name_, symbol_) {
         owner = owner_;
+        factory = msg.sender;
         price = price_;
         baseURI = baseURI_;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -39,18 +41,10 @@ contract NFT is TRC721, AccessControl {
         grantRole(ADMIN_ROLE, owner_);
         grantRole(MINTER_ROLE, owner_);
 
-        for (uint256 i = 0; i < amount; i++) {
+        for (uint256 i = 0; i < amount_; i++) {
             _safeMint(owner_, totalAmount.current());
             totalAmount.increment();
         }
-    }
-
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal virtual override {
-        super._beforeTokenTransfer(from, to, tokenId);
     }
 
     function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
@@ -99,6 +93,22 @@ contract NFT is TRC721, AccessControl {
         require(_exists(tokenId), "TRC721: invalid token ID");
     }
 
+    function getAllIds(address account) external view returns(uint256[] memory) {
+        uint256 accountBalance = balanceOf(account);
+        uint256 totalIds = totalAmount.current();
+        uint256[] memory idArray = new uint256[](accountBalance);
+        uint256 idArrayIndex = 0;
+
+        for (uint256 i = 0; i < totalIds; i++) {
+            if (ownerOf(i) == account) {
+                idArray[idArrayIndex] = i;
+                idArrayIndex++;
+            }
+        }
+
+        return idArray;
+    }
+
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -109,5 +119,35 @@ contract NFT is TRC721, AccessControl {
         return
             interfaceId == _INTERFACE_ID_FEES ||
             AccessControl.supportsInterface(interfaceId);
+    }
+    
+    /**
+     * @dev Hook that is called before any token transfer. This includes minting.
+     *
+     * First checks Trade contract address from NFTFactory deployer contract
+     *
+     * Calling conditions:
+     * 
+     * To the Trade contract for selling
+     * From the Trade contract for buying
+     * From the owner of contract
+     * From zero address for minting
+     * 
+     */
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal override {
+        super._beforeTokenTransfer(from, to, tokenId);
+
+        (, bytes memory result) = factory.call(abi.encodeWithSignature("getTradeAddress()"));
+
+        address tradeAddress = abi.decode(result, (address));
+        require(tradeAddress != address(0), "Trading is not avaliable now");
+
+        if(from != tradeAddress && to != tradeAddress && from != owner && from != address(0)) {
+            revert();
+        }
     }
 }
