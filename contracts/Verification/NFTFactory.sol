@@ -16,7 +16,7 @@ contract NFTFactory {
     }
 
     constructor() {
-        owner = msg.sender;
+        owner == msg.sender;
     }
 
     function createTRC721(
@@ -25,11 +25,14 @@ contract NFTFactory {
         string memory baseURI,
         address newOwner,
         uint256 price,
+        uint256 percentFee,
         uint256 amount,
         uint256 _salt
     ) public returns (address newNFTaddress) {
+        require(percentFee > 0 && percentFee <= 10000, "Fee percent must be more than 0 and less then 10000");
+
         bytes32 byteSalt = bytes32(_salt);
-        NFT newNFT = new NFT{salt: byteSalt}(name, symbol, baseURI, newOwner, price, amount);
+        NFT newNFT = new NFT{salt: byteSalt}(name, symbol, baseURI, newOwner, price, percentFee, amount);
         emit Deployed(address(newNFT));
 
         return (address(newNFT));
@@ -49,6 +52,7 @@ contract NFTFactory {
         string memory baseURI,
         address newOwner,
         uint256 price,
+        uint256 percentFee,
         uint256 amount,
         uint256 _salt
     ) public view returns (address newNFTaddress) {
@@ -65,6 +69,7 @@ contract NFTFactory {
                                 baseURI,
                                 newOwner,
                                 price,
+                                percentFee,
                                 amount)
                             ))
             )))));

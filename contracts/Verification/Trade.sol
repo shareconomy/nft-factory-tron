@@ -7,12 +7,15 @@ import "./ITRC721.sol";
 contract Trade {
     struct Order {
         uint256 priceSUN;
+        uint256 precentFee;
         address seller;
         address buyer;
         bool sellerAccepted;
     }
 
     address public owner;
+
+    uint256 constant public percentDecimals = 2;
 
     uint256 private _status;
     uint256 private constant _NOT_ENTERED = 1;
@@ -80,9 +83,14 @@ contract Trade {
             address(this),
             _tokenID
         );
+        require(_priceSUN >= 10000, "Minumal price for sale is 10000 SUN");
+
+        (, bytes memory result ) = _NFTAddress.call("precentFee()");
+        uint256 _percentFee = abi.decode(result, (uint256));
 
         NFTOrders[_NFTAddress][_tokenID].priceSUN = _priceSUN;
         NFTOrders[_NFTAddress][_tokenID].seller = msg.sender;
+        NFTOrders[_NFTAddress][_tokenID].precentFee = _percentFee;
 
         emit OrderAdded(_NFTAddress, _tokenID, _priceSUN, msg.sender);
 
@@ -154,8 +162,17 @@ contract Trade {
         require(order.sellerAccepted, "Seller didnt accept a trade");
         require(order.buyer != address(0), "Noone redeems an order");
 
-        (bool success, ) = order.seller.call{value: order.priceSUN}("");
-        require(success, "Can not send TRX to seller");
+        uint256 fee = (order.priceSUN * order.precentFee) / (100 ** percentDecimals);
+        uint256 reward = order.priceSUN - fee;
+
+        (, bytes memory result) = _NFTAddress.call("owner()");
+        address nftContractOwner = abi.decode(result, (address));
+        
+        (bool success1, ) = nftContractOwner.call{value: fee}("");
+        require(success1, "Can not send TRX to NFT contract owner");
+
+        (bool success2, ) = order.seller.call{value: reward}("");
+        require(success2, "Can not send TRX to seller");
 
         ITRC721(_NFTAddress).transferFrom(address(this), order.buyer, _tokenID);
 

@@ -20,6 +20,8 @@ contract NFT is TRC721, AccessControl {
     address public owner;
     address public factory;
     uint256 public price;
+    uint256 public percentFee;
+    uint256 constant public percentDecimals = 2;
     string public baseURI;
 
     mapping(uint256 => string) private _tokenURIs;
@@ -30,11 +32,13 @@ contract NFT is TRC721, AccessControl {
         string memory baseURI_,
         address owner_,
         uint256 price_,
+        uint256 percentFee_,
         uint256 amount_
     ) TRC721(name_, symbol_) {
         owner = owner_;
         factory = msg.sender;
         price = price_;
+        percentFee = percentFee_;
         baseURI = baseURI_;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         grantRole(DEFAULT_ADMIN_ROLE, owner_);
@@ -83,6 +87,12 @@ contract NFT is TRC721, AccessControl {
 
     function changePrice(uint256 _price) external onlyRole(ADMIN_ROLE) {
         price = _price;
+    }
+
+    function changeFeePercent(uint256 _percentFee) external onlyRole(ADMIN_ROLE) {
+        require(_percentFee > 0, "Fee must be more then 0 %");
+        require(_percentFee <= 10000, "Maximum fee is 100,00 %");
+        percentFee = _percentFee;
     }
 
     function setBaseURI(string memory _baseURI) external onlyRole(ADMIN_ROLE) {
