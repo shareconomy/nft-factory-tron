@@ -12,14 +12,14 @@
 //   deployer.deploy(NFT, name, symbol, baseURI, newOwner, price, amount);
 // };
 
-var NFTFactory= artifacts.require("NFTFactory");
-
-module.exports = function(deployer) {
-  deployer.deploy(NFTFactory);
-};
-
-// var Trade = artifacts.require("Trade");
+// var NFTFactory= artifacts.require("NFTFactory");
 
 // module.exports = function(deployer) {
-//   deployer.deploy(Trade);
+//   deployer.deploy(NFTFactory);
 // };
+
+var Trade = artifacts.require("Trade");
+
+module.exports = function(deployer) {
+  deployer.deploy(Trade);
+};
