@@ -1,3 +1,6 @@
+Recompiles all contracts and deployes them using 1_NFTactory_migration.js file
+```source .env && tronbox migrate --reset --network shasta``` 
+
 Before running tests, you need to start Tronbox-quickstart node by running:
 
 ``` docker run -it -p 9090:9090 --rm --name tron -e "defaultBalance=1000000" -e "mnemonic=jacket acoustic more any text engine giraffe other turkey popular grab style" trontools/quickstart ```

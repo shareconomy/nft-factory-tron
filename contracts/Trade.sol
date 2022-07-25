@@ -33,6 +33,9 @@ contract Trade {
     /// @notice Amount of decimals of fee percents
     uint256 constant public percentDecimals = 2;
 
+    /// @notice Minimal amount of time for each auction
+    uint256 public minimumAuctionTime = 2 days;
+
     /// @dev Some constants for non-Reetrancy modifier
     uint256 private _status;
     uint256 private constant _NOT_ENTERED = 1;
@@ -226,7 +229,7 @@ contract Trade {
      * @param _tokenID NFT token ID you want to initialize order
      * @dev Anyone can call this function, reverts if any 'success' value returns false
      */
-    function initilizeOrder(address _NFTAddress, uint256 _tokenID)
+    function initializeOrder(address _NFTAddress, uint256 _tokenID)
         external
         nonReentrant
     {
@@ -267,7 +270,7 @@ contract Trade {
         require(msg.sender == order.buyer || msg.sender == order.seller, "Only seller and buyer can decline");
         require(order.buyer != address(0), "Nothing to decline");
 
-        (bool success, ) = order.seller.call{value: order.priceSUN}("");
+        (bool success, ) = order.buyer.call{value: order.priceSUN}("");
         require(success, "Can not send TRX to buyer");
         
         NFTOrders[_NFTAddress][_tokenID].buyer = address(0);
@@ -296,7 +299,7 @@ contract Trade {
             _tokenID
         );
         require(initialPrice >= 10000, "Minumal price for sale is 10000 SUN");
-        require(secondsToEnd >= 2 days, "Minimal time for auction is 2 days");
+        require(secondsToEnd >= minimumAuctionTime, "Time must be more then minimal auction time");
 
         (, bytes memory result ) = _NFTAddress.call(abi.encodeWithSignature("percentFee()"));
         uint256 _percentFee = abi.decode(result, (uint256));
@@ -374,6 +377,11 @@ contract Trade {
         delete NFTAuctions[_NFTAddress][_tokenID];
     }
 
+    function setMinimalAuctionTime(uint256 timeInSeconds) external {
+        require(msg.sender == owner, "You are not an owner!");
+        minimumAuctionTime = timeInSeconds;
+    }
+
     /// @dev Needs for TRC721 token receiving
     function onTRC721Received(
         address,
@@ -384,3 +392,5 @@ contract Trade {
         return this.onTRC721Received.selector;
     }
 }
+
+

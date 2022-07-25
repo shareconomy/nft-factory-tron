@@ -10,7 +10,7 @@ import "./NFT/NFT.sol";
 
 contract NFTFactory {
     /// @notice The only smart-contract for trading NFTs
-    address tradeAddress;
+    address public tradeAddress;
 
     /// @notice Contact owner address
     address public owner;
