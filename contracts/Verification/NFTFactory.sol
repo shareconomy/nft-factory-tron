@@ -15,7 +15,7 @@ contract NFTFactory {
     /// @notice Contact owner address
     address public owner;
 
-    event Deployed(address newNFTaddress);
+    event Deployed(address newNFTAddress);
 
     /// @notice Allowing access only to Owner
     modifier onlyOwner() {
@@ -50,7 +50,7 @@ contract NFTFactory {
         uint256 percentFee,
         uint256 amount,
         uint256 _salt
-    ) public returns (address newNFTaddress) {
+    ) public returns (address newNFTAddress) {
         require(percentFee > 0 && percentFee <= 10000, "Fee percent must be more than 0 and less then 10000");
 
         bytes32 byteSalt = bytes32(_salt);
@@ -87,7 +87,7 @@ contract NFTFactory {
         uint256 percentFee,
         uint256 amount,
         uint256 _salt
-    ) public view returns (address newNFTaddress) {
+    ) public view returns (address newNFTAddress) {
         return
             address(uint160(uint(keccak256(abi.encodePacked(
                             bytes1(0x41),
